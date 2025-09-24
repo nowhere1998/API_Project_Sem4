@@ -9,7 +9,7 @@ using API.Models;
 
 namespace API.Area.Admin.Controller
 {
-    [Route("api/[controller]")]
+    [Route("api/admin/[controller]")]
     [ApiController]
     public class AccountExamsController : ControllerBase
     {
