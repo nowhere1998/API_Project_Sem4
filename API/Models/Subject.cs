@@ -9,10 +9,11 @@ namespace API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int SubjectId { get; set; }
         [Required]
-        [StringLength(100)]
+        [StringLength(255)]
         public string? Name { get; set; }
         public int MaxScore { get; set; }
         public float PassScore { get; set; }
-        public bool Status { get; set; }
+        public bool Status { get; set; } = true;
+        public ICollection<Exam> Exams { get; set; } = new HashSet<Exam>();
     }
 }

@@ -12,7 +12,8 @@ namespace API.Models
         [Required]
         [StringLength(100)]
         public string? Name { get; set; }
-        [StringLength(100)]
-        public bool Status { get; set; }
+        public bool Status { get; set; } = true;
+        public ICollection<Account> Accounts { get; set; } = new HashSet<Account>();
+        public ICollection<Exam> Exams { get; set; } = new HashSet<Exam>();
     }
 }
