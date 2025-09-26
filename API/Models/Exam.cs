@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API.Models
 {
+    [Table("Exams")]
     public class Exam
     {
         [Key]

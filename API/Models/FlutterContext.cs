@@ -15,5 +15,30 @@ namespace API.Models
         public DbSet<Register> Registers { get; set; } = default!;
         public DbSet<Room> Rooms { get; set; } = default!;
         public DbSet<Subject> Subjects { get; set; } = default!;
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Exam - Account
+            modelBuilder.Entity<Exam>()
+                .HasOne(e => e.Account)
+                .WithMany(a => a.Exams)
+                .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Exam - Room
+            modelBuilder.Entity<Exam>()
+                .HasOne(e => e.Room)
+                .WithMany(r => r.Exams)
+                .HasForeignKey(e => e.RoomId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Exam - Subject
+            modelBuilder.Entity<Exam>()
+                .HasOne(e => e.Subject)
+                .WithMany(s => s.Exams)
+                .HasForeignKey(e => e.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
     }
 }

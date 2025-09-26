@@ -32,7 +32,7 @@ namespace API.Area.Admin.Controller
                     (acc.Email.ToLower().Contains(name.ToLower().Trim())))
                 );
             }
-            return await query.Include(acc => acc.Room).ToListAsync();
+            return await query.ToListAsync();
         }
 
         // GET: api/Accounts/5
