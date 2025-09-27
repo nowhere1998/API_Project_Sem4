@@ -25,7 +25,7 @@ namespace API.Area.Admin.Controller
         public async Task<ActionResult<IEnumerable<Room>>> GetRooms([FromQuery] string? name)
         {
             var query = _context.Rooms.AsQueryable();
-            if (string.IsNullOrWhiteSpace(name))
+            if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Where(r =>
                     r.Name.ToLower().Contains(name.ToLower().Trim())

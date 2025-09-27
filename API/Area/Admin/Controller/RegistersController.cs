@@ -22,9 +22,16 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Registers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Register>>> GetRegisters()
+        public async Task<ActionResult<IEnumerable<Register>>> GetRegisters([FromQuery] string? name)
         {
-            return await _context.Registers.ToListAsync();
+            var query = _context.Registers.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                query = query.Where(r =>
+                    r.Account.Name.ToLower().Contains(name.ToLower().Trim())
+                );
+            }
+            return await query.ToListAsync();
         }
 
         // GET: api/Registers/5

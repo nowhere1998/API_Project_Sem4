@@ -25,10 +25,10 @@ namespace API.Area.Admin.Controller
         public async Task<ActionResult<IEnumerable<Subject>>> GetSubjects([FromQuery] string? name)
         {
             var query = _context.Subjects.AsQueryable();
-            if (string.IsNullOrWhiteSpace(name))
+            if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Where(s =>
-                    s.Name.ToLower().Contains(name.ToLower())
+                    s.Name.ToLower().Contains(name.ToLower().Trim())
                 );
             }
             return await query.ToListAsync();

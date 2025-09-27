@@ -25,7 +25,7 @@ namespace API.Area.Admin.Controller
         public async Task<ActionResult<IEnumerable<Account>>> GetAccounts([FromQuery] string? name)
         {
             var query = _context.Accounts.AsQueryable();
-            if (string.IsNullOrWhiteSpace(name))
+            if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Where(acc => 
                     (acc.Name.ToLower().Contains(name.ToLower().Trim()) &&
