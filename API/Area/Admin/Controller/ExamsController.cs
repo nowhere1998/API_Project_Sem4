@@ -38,7 +38,7 @@ namespace API.Area.Admin.Controller
                 .Select(e => new ExamDto
                 {
                     ExamId = e.ExamId,
-                    ExamName = e.Name,
+                    Name = e.Name,
 
                     AccountId = e.AccountId,
                     AccountName = e.Account.Name,
