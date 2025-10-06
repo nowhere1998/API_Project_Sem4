@@ -22,7 +22,7 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Exams
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ExamDto>>> GetExams([FromQuery] string? name)
+        public async Task<ActionResult<IEnumerable<ExamDto>>> GetExams([FromQuery] string? name, string? status)
         {
             var query = _context.Exams.AsQueryable();
 
@@ -30,10 +30,15 @@ namespace API.Area.Admin.Controller
             {
                 query = query.Where(e => e.Name.ToLower().Contains(name.ToLower().Trim()));
             }
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
+            }
 
             var result = await query
                 .Include(e => e.Account)
-                .Include(e => e.Subject)
+                .Include(e => e.CourseSubject)
+                    .ThenInclude(cs => cs.Subject)
                 .Include(e => e.Room)
                 .Select(e => new ExamDto
                 {
@@ -43,8 +48,9 @@ namespace API.Area.Admin.Controller
                     AccountId = e.AccountId,
                     AccountName = e.Account.Name,
 
-                    SubjectId = e.SubjectId,
-                    SubjectName = e.Subject.Name,
+                    CourseSubjectId = e.CourseSubjectId,
+
+                    SubjectName = e.CourseSubject.Subject.Name,
 
                     RoomId = e.RoomId,
                     RoomName = e.Room.Name

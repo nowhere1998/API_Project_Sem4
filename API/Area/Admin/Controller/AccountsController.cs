@@ -22,15 +22,26 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts([FromQuery] string? name)
+        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts([FromQuery] string? name, int? role, string? status)
         {
             var query = _context.Accounts.AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Where(acc => 
-                    (acc.Name.ToLower().Contains(name.ToLower().Trim()) &&
-                    (acc.Email.ToLower().Contains(name.ToLower().Trim())))
+                    (
+                        acc.Name.ToLower().Contains(name.ToLower().Trim()) ||
+                        acc.Email.ToLower().Contains(name.ToLower().Trim()) ||
+                        acc.FullName.ToLower().Contains(name.ToLower().Trim())
+                    )
                 );
+            }
+            if (role.HasValue)
+            {
+                query = query.Where(acc => acc.Role == role);
+            }
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
             return await query.ToListAsync();
         }

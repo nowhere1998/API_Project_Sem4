@@ -3,16 +3,16 @@
     public class ExamDto
     {
         public int ExamId { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         public int AccountId { get; set; }
-        public string AccountName { get; set; }
+        public string? AccountName { get; set; }
 
-        public int SubjectId { get; set; }
-        public string SubjectName { get; set; }
+        public int CourseSubjectId { get; set; }
+        public string? SubjectName { get; set; }
 
         public int RoomId { get; set; }
-        public string RoomName { get; set; }
+        public string? RoomName { get; set; }
 
         public DateTime ExamDay { get; set; }
         public TimeSpan ExamTime { get; set; }

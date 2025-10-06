@@ -22,13 +22,17 @@ namespace API.Area.Admin.Controller
 
         // GET: api/AccountExams
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AccountExamDto>>> GetAccountExams([FromQuery] string? name)
+        public async Task<ActionResult<IEnumerable<AccountExamDto>>> GetAccountExams([FromQuery] string? name, string? status)
         {
             var query = _context.AccountExams.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Where(ae => ae.Student.Name.Contains(name));
+            }
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
 
             var result = await query

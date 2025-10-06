@@ -9,26 +9,26 @@ using API.Models;
 
 namespace API.Area.Admin.Controller
 {
-    [Route("api/admin/[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class RoomsController : ControllerBase
+    public class CoursesController : ControllerBase
     {
         private readonly FlutterContext _context;
 
-        public RoomsController(FlutterContext context)
+        public CoursesController(FlutterContext context)
         {
             _context = context;
         }
 
-        // GET: api/Rooms
+        // GET: api/Courses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Room>>> GetRooms([FromQuery] string? name, string? status)
+        public async Task<ActionResult<IEnumerable<Course>>> GetCourse([FromQuery] string? name, string? status)
         {
-            var query = _context.Rooms.AsQueryable();
+            var query = _context.Course.AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
             {
-                query = query.Where(r =>
-                    r.Name.ToLower().Contains(name.ToLower().Trim())
+                query = query.Where(c =>
+                    c.Name.ToLower().Contains(name.ToLower().Trim())
                 );
             }
             if (!string.IsNullOrWhiteSpace(status))
@@ -38,35 +38,35 @@ namespace API.Area.Admin.Controller
             return await query.ToListAsync();
         }
 
-        // GET: api/Rooms/5
+        // GET: api/Courses/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Room>> GetRoom(int id)
+        public async Task<ActionResult<Course>> GetCourse(int id)
         {
-            var room = await _context.Rooms.FindAsync(id);
+            var course = await _context.Course.FindAsync(id);
 
-            if (room == null)
+            if (course == null)
             {
                 return NotFound();
             }
 
-            return room;
+            return course;
         }
 
-        // PUT: api/Rooms/5
+        // PUT: api/Courses/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRoom(int id, Room room)
+        public async Task<IActionResult> PutCourse(int id, Course course)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            if (id != room.RoomId)
+            if (id != course.CourseId)
             {
                 return BadRequest();
             }
 
-            _context.Entry(room).State = EntityState.Modified;
+            _context.Entry(course).State = EntityState.Modified;
 
             try
             {
@@ -74,7 +74,7 @@ namespace API.Area.Admin.Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!RoomExists(id))
+                if (!CourseExists(id))
                 {
                     return NotFound();
                 }
@@ -87,41 +87,41 @@ namespace API.Area.Admin.Controller
             return NoContent();
         }
 
-        // POST: api/Rooms
+        // POST: api/Courses
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Room>> PostRoom(Room room)
+        public async Task<ActionResult<Course>> PostCourse(Course course)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            _context.Rooms.Add(room);
+            _context.Course.Add(course);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetRoom", new { id = room.RoomId }, room);
+            return CreatedAtAction("GetCourse", new { id = course.CourseId }, course);
         }
 
-        // DELETE: api/Rooms/5
+        // DELETE: api/Courses/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRoom(int id)
+        public async Task<IActionResult> DeleteCourse(int id)
         {
-            var room = await _context.Rooms.FindAsync(id);
-            if (room == null)
+            var course = await _context.Course.FindAsync(id);
+            if (course == null)
             {
                 return NotFound();
             }
 
-            room.Status = false;
-            _context.Entry(room).State = EntityState.Modified;
+            course.Status = false;
+            _context.Entry(course).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool RoomExists(int id)
+        private bool CourseExists(int id)
         {
-            return _context.Rooms.Any(e => e.RoomId == id);
+            return _context.Course.Any(e => e.CourseId == id);
         }
     }
 }

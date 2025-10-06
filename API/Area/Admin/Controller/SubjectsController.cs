@@ -22,7 +22,7 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Subjects
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Subject>>> GetSubjects([FromQuery] string? name)
+        public async Task<ActionResult<IEnumerable<Subject>>> GetSubjects([FromQuery] string? name, string? status)
         {
             var query = _context.Subjects.AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
@@ -30,6 +30,10 @@ namespace API.Area.Admin.Controller
                 query = query.Where(s =>
                     s.Name.ToLower().Contains(name.ToLower().Trim())
                 );
+            }
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
             return await query.ToListAsync();
         }
