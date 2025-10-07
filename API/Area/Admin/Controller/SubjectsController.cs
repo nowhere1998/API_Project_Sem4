@@ -31,7 +31,7 @@ namespace API.Area.Admin.Controller
                     s.Name.ToLower().Contains(name.ToLower().Trim())
                 );
             }
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
             {
                 query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
