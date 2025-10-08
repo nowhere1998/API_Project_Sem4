@@ -55,6 +55,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors("AllowOrigin");
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();
