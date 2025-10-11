@@ -48,10 +48,6 @@ namespace API.Area.Admin.Controller
                     AccountId = e.AccountId,
                     AccountName = e.Account.Name,
 
-                    CourseSubjectId = e.CourseSubjectId,
-
-                    SubjectName = e.CourseSubject.Subject.Name,
-
                     RoomId = e.RoomId,
                     RoomName = e.Room.Name
                 })
