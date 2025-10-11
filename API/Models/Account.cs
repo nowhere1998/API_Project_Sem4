@@ -23,6 +23,8 @@ namespace API.Models
         [StringLength(200)]
         public string? Email { get; set; }
         public string? Phone { get; set; }
+        public string? Address { get; set; }
+        public DateTime DateOfBirth { get; set; }
         public int Role { get; set; } = 0;
         public string? Image { get; set; }
         public bool Status {  get; set; } = true;
@@ -32,7 +34,6 @@ namespace API.Models
         public ICollection<AccountExam> AccountExams { get; set; } = new HashSet<AccountExam>();
         public ICollection<Exam> Exams { get; set; } = new HashSet<Exam>();
         public ICollection<Register> Registers { get; set; } = new HashSet<Register>();
-
-
+        public ICollection<CourseStudent> CourseStudents { get; set; } = new HashSet<CourseStudent>();
     }
 }

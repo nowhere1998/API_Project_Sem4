@@ -28,10 +28,10 @@ namespace API.Area.Admin.Controller
             if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Where(r =>
-                    r.Account.Name.ToLower().Contains(name.ToLower().Trim())
+                    r.Student.Name.ToLower().Contains(name.ToLower().Trim())
                 );
             }
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
             {
                 query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }

@@ -22,7 +22,7 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Rooms
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Room>>> GetRooms([FromQuery] string? name, string? status)
+        public async Task<ActionResult<IEnumerable<Room>>> GetRooms([FromQuery] string? name, string? status, string? roomId)
         {
             var query = _context.Rooms.AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
@@ -31,7 +31,11 @@ namespace API.Area.Admin.Controller
                     r.Name.ToLower().Contains(name.ToLower().Trim())
                 );
             }
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(roomId) && int.TryParse(roomId, out int roomIdValue))
+            {
+                query = query.Where(r => r.RoomId == roomIdValue);
+            }
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
             {
                 query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }

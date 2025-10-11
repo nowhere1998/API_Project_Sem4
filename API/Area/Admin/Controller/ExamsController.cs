@@ -30,7 +30,7 @@ namespace API.Area.Admin.Controller
             {
                 query = query.Where(e => e.Name.ToLower().Contains(name.ToLower().Trim()));
             }
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
             {
                 query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
@@ -47,10 +47,6 @@ namespace API.Area.Admin.Controller
 
                     AccountId = e.AccountId,
                     AccountName = e.Account.Name,
-
-                    CourseSubjectId = e.CourseSubjectId,
-
-                    SubjectName = e.CourseSubject.Subject.Name,
 
                     RoomId = e.RoomId,
                     RoomName = e.Room.Name

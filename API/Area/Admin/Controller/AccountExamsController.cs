@@ -30,7 +30,7 @@ namespace API.Area.Admin.Controller
             {
                 query = query.Where(ae => ae.Student.Name.Contains(name));
             }
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
             {
                 query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }

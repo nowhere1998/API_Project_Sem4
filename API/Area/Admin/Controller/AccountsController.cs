@@ -39,7 +39,7 @@ namespace API.Area.Admin.Controller
             {
                 query = query.Where(acc => acc.Role == role);
             }
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
             {
                 query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
