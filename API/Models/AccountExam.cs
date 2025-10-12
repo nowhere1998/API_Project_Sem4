@@ -9,7 +9,7 @@ namespace API.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int AccountExamId { get; set; }
-        public int SubjectId { get; set; }
+        public int CourseSubjectId { get; set; }
         [Required]
         public int ExamId { get; set; }
         [Required]
@@ -23,5 +23,7 @@ namespace API.Models
         public Exam? Exam { get; set; }
         [ForeignKey("StudentId")]
         public Account? Student { get; set; }
+        [ForeignKey("CourseSubjectId")]
+        public CourseSubject? CourseSubject { get; set; }
     }
 }

@@ -38,6 +38,10 @@ namespace API.Area.Admin.Controller
             var result = await query
                 .Include(ae => ae.Exam)
                 .Include(ae => ae.Student)
+                .Include(ae => ae.CourseSubject)
+                    .ThenInclude(cs => cs.Subject)
+                .Include(ae => ae.CourseSubject)
+                    .ThenInclude(cs => cs.Course)
                 .Select(ae => new AccountExamDto
                 {
                     AccountExamId = ae.AccountExamId,
@@ -45,6 +49,13 @@ namespace API.Area.Admin.Controller
                     ExamName = ae.Exam.Name,
                     StudentId = ae.StudentId,
                     StudentName = ae.Student.Name,
+
+                    Subject = ae.CourseSubject.Subject.Name,
+                    SubjectId = ae.CourseSubject.SubjectId,
+
+                    Course = ae.CourseSubject.Course.Name,
+                    CourseId = ae.CourseSubject.CourseId,
+
                     Score = ae.Score,
                     IsPass = ae.IsPass
                 })
