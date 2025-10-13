@@ -63,52 +63,121 @@ namespace API.Area.Admin.Controller
         // PUT: api/Accounts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount(int id, Account account)
+        public async Task<IActionResult> PutAccount(
+        int id,
+        [FromForm] Account account,      // Bind từ form-data
+        IFormFile? image,                // File upload mới
+        [FromForm] string? oldImage = "" // Nếu không upload file mới
+)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
-            if (id != account.AccountId)
-            {
-                return BadRequest();
-            }
 
-            _context.Entry(account).State = EntityState.Modified;
+            if (id != account.AccountId)
+                return BadRequest("ID không khớp");
 
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AccountExists(id))
-                {
+                // 1️⃣ Lấy account từ DB
+                var accountFromDb = await _context.Accounts.FindAsync(id);
+                if (accountFromDb == null)
                     return NotFound();
+
+                // 2️⃣ Cập nhật các field cần thay đổi
+                accountFromDb.Name = account.Name;
+                accountFromDb.FullName = account.FullName;
+                accountFromDb.RoomId = account.RoomId;
+                accountFromDb.Email = account.Email;
+                accountFromDb.Phone = account.Phone ?? "";
+                accountFromDb.Address = account.Address;
+                accountFromDb.DateOfBirth = account.DateOfBirth;
+                accountFromDb.Role = account.Role;
+                accountFromDb.Status = account.Status; // checkbox status
+                accountFromDb.Password = account.Password; // hoặc hash nếu cần
+
+                // 3️⃣ Xử lý file ảnh
+                if (image != null && image.Length > 0)
+                {
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "assets", "images");
+                    if (!Directory.Exists(uploadDir))
+                        Directory.CreateDirectory(uploadDir);
+
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                    var filePath = Path.Combine(uploadDir, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    accountFromDb.Image = "/assets/images/" + fileName;
                 }
                 else
                 {
-                    throw;
+                    accountFromDb.Image = oldImage; // giữ ảnh cũ
                 }
-            }
 
-            return NoContent();
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Account updated successfully", account = accountFromDb });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
         }
+
+
+
 
         // POST: api/Accounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Account>> PostAccount(Account account)
+        public async Task<ActionResult<Account>> PostAccount([FromForm] Account account, IFormFile? image)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAccount", new { id = account.AccountId }, account);
+            try
+            {
+                // ✅ 1. Nếu có upload ảnh
+                if (image != null && image.Length > 0)
+                {
+                    // Tạo đường dẫn thư mục "wwwroot/assets/images"
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "assets", "images");
+                    if (!Directory.Exists(uploadDir))
+                    {
+                        Directory.CreateDirectory(uploadDir);
+                    }
+
+                    // Tạo tên file duy nhất
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                    var filePath = Path.Combine(uploadDir, fileName);
+
+                    // Lưu file
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    // ✅ Lưu đường dẫn tương đối vào DB
+                    account.Image = "/assets/images/" + fileName;
+                }
+
+                // ✅ 2. Lưu tài khoản vào DB
+                _context.Accounts.Add(account);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction("GetAccount", new { id = account.AccountId }, account);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
         }
+
 
         // DELETE: api/Accounts/5
         [HttpDelete("{id}")]

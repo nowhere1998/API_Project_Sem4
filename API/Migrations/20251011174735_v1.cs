@@ -67,6 +67,8 @@ namespace API.Migrations
                     Password = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
                     Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Status = table.Column<bool>(type: "bit", nullable: false)
@@ -111,20 +113,47 @@ namespace API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CourseStudents",
+                columns: table => new
+                {
+                    CourseStudentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StudentId = table.Column<int>(type: "int", nullable: false),
+                    CourseId = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CourseStudents", x => x.CourseStudentId);
+                    table.ForeignKey(
+                        name: "FK_CourseStudents_Accounts_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CourseStudents_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "CourseId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Exams",
                 columns: table => new
                 {
                     ExamId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CourseSubjectId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RoomId = table.Column<int>(type: "int", nullable: false),
                     AccountId = table.Column<int>(type: "int", nullable: false),
                     ExamDay = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ExamTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     Status = table.Column<bool>(type: "bit", nullable: false),
                     Fee = table.Column<float>(type: "real", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CourseSubjectId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -186,8 +215,9 @@ namespace API.Migrations
                 {
                     RegisterId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    AccountId = table.Column<int>(type: "int", nullable: false),
+                    StudentId = table.Column<int>(type: "int", nullable: false),
                     ExamId = table.Column<int>(type: "int", nullable: false),
+                    SubjectId = table.Column<int>(type: "int", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<bool>(type: "bit", nullable: false),
                     payment = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -197,8 +227,8 @@ namespace API.Migrations
                 {
                     table.PrimaryKey("PK_Registers", x => x.RegisterId);
                     table.ForeignKey(
-                        name: "FK_Registers_Accounts_AccountId",
-                        column: x => x.AccountId,
+                        name: "FK_Registers_Accounts_StudentId",
+                        column: x => x.StudentId,
                         principalTable: "Accounts",
                         principalColumn: "AccountId",
                         onDelete: ReferentialAction.Cascade);
@@ -207,6 +237,12 @@ namespace API.Migrations
                         column: x => x.ExamId,
                         principalTable: "Exams",
                         principalColumn: "ExamId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Registers_Subjects_SubjectId",
+                        column: x => x.SubjectId,
+                        principalTable: "Subjects",
+                        principalColumn: "SubjectId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -224,6 +260,16 @@ namespace API.Migrations
                 name: "IX_Accounts_RoomId",
                 table: "Accounts",
                 column: "RoomId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CourseStudents_CourseId",
+                table: "CourseStudents",
+                column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CourseStudents_StudentId",
+                table: "CourseStudents",
+                column: "StudentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CourseSubjects_CourseId",
@@ -251,14 +297,19 @@ namespace API.Migrations
                 column: "RoomId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Registers_AccountId",
-                table: "Registers",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Registers_ExamId",
                 table: "Registers",
                 column: "ExamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Registers_StudentId",
+                table: "Registers",
+                column: "StudentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Registers_SubjectId",
+                table: "Registers",
+                column: "SubjectId");
         }
 
         /// <inheritdoc />
@@ -266,6 +317,9 @@ namespace API.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AccountExams");
+
+            migrationBuilder.DropTable(
+                name: "CourseStudents");
 
             migrationBuilder.DropTable(
                 name: "Registers");
