@@ -30,6 +30,12 @@ namespace API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AccountId"));
 
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -130,6 +136,32 @@ namespace API.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("API.Models.CourseStudent", b =>
+                {
+                    b.Property<int>("CourseStudentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CourseStudentId"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CourseStudentId");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("CourseStudents");
+                });
+
             modelBuilder.Entity("API.Models.CourseSubject", b =>
                 {
                     b.Property<int>("CourseSubjectId")
@@ -170,7 +202,7 @@ namespace API.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("int");
 
-                    b.Property<int>("CourseSubjectId")
+                    b.Property<int?>("CourseSubjectId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -187,8 +219,7 @@ namespace API.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("RoomId")
                         .HasColumnType("int");
@@ -215,7 +246,7 @@ namespace API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RegisterId"));
 
-                    b.Property<int>("AccountId")
+                    b.Property<int>("CourseSubjectId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -231,15 +262,25 @@ namespace API.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("int");
+
                     b.Property<string>("payment")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("RegisterId");
 
-                    b.HasIndex("AccountId");
+                    b.HasIndex("CourseSubjectId");
 
                     b.HasIndex("ExamId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SubjectId");
 
                     b.ToTable("Registers");
                 });
@@ -322,6 +363,25 @@ namespace API.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("API.Models.CourseStudent", b =>
+                {
+                    b.HasOne("API.Models.Course", "Course")
+                        .WithMany("CourseStudents")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API.Models.Account", "Student")
+                        .WithMany("CourseStudents")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("API.Models.CourseSubject", b =>
                 {
                     b.HasOne("API.Models.Course", "Course")
@@ -349,11 +409,9 @@ namespace API.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("API.Models.CourseSubject", "CourseSubject")
+                    b.HasOne("API.Models.CourseSubject", null)
                         .WithMany("Exams")
-                        .HasForeignKey("CourseSubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("CourseSubjectId");
 
                     b.HasOne("API.Models.Room", "Room")
                         .WithMany("Exams")
@@ -363,16 +421,14 @@ namespace API.Migrations
 
                     b.Navigation("Account");
 
-                    b.Navigation("CourseSubject");
-
                     b.Navigation("Room");
                 });
 
             modelBuilder.Entity("API.Models.Register", b =>
                 {
-                    b.HasOne("API.Models.Account", "Account")
+                    b.HasOne("API.Models.CourseSubject", "CourseSubject")
                         .WithMany("Registers")
-                        .HasForeignKey("AccountId")
+                        .HasForeignKey("CourseSubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -382,14 +438,28 @@ namespace API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Account");
+                    b.HasOne("API.Models.Account", "Student")
+                        .WithMany("Registers")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API.Models.Subject", null)
+                        .WithMany("Registers")
+                        .HasForeignKey("SubjectId");
+
+                    b.Navigation("CourseSubject");
 
                     b.Navigation("Exam");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("API.Models.Account", b =>
                 {
                     b.Navigation("AccountExams");
+
+                    b.Navigation("CourseStudents");
 
                     b.Navigation("Exams");
 
@@ -398,12 +468,16 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Models.Course", b =>
                 {
+                    b.Navigation("CourseStudents");
+
                     b.Navigation("CourseSubject");
                 });
 
             modelBuilder.Entity("API.Models.CourseSubject", b =>
                 {
                     b.Navigation("Exams");
+
+                    b.Navigation("Registers");
                 });
 
             modelBuilder.Entity("API.Models.Exam", b =>
@@ -423,6 +497,8 @@ namespace API.Migrations
             modelBuilder.Entity("API.Models.Subject", b =>
                 {
                     b.Navigation("CourseSubjects");
+
+                    b.Navigation("Registers");
                 });
 #pragma warning restore 612, 618
         }
