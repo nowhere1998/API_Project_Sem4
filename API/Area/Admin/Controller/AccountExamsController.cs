@@ -57,7 +57,8 @@ namespace API.Area.Admin.Controller
                     CourseId = ae.CourseSubject.CourseId,
 
                     Score = ae.Score,
-                    IsPass = ae.IsPass
+                    IsPass = ae.IsPass,
+                    Status = ae.Status,
                 })
                 .ToListAsync();
 
