@@ -37,8 +37,6 @@ namespace API.Area.Admin.Controller
 
             var result = await query
                 .Include(e => e.Account)
-                .Include(e => e.CourseSubject)
-                    .ThenInclude(cs => cs.Subject)
                 .Include(e => e.Room)
                 .Select(e => new ExamDto
                 {
@@ -47,9 +45,12 @@ namespace API.Area.Admin.Controller
 
                     AccountId = e.AccountId,
                     AccountName = e.Account.Name,
-
+                    ExamDayString = e.ExamDay.ToString("yyyy-MM-dd"),
+                    ExamTimeString = e.ExamTime.ToString(@"hh\:mm"),
                     RoomId = e.RoomId,
-                    RoomName = e.Room.Name
+                    RoomName = e.Room.Name,
+                    Status = e.Status,
+                    Fee = e.Fee,
                 })
                 .ToListAsync();
 
