@@ -56,4 +56,4 @@ nunit-*.xml
 /bin/
 /obj/
 .vs/
-/migration/
+/Migrations/
