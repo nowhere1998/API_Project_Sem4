@@ -127,5 +127,67 @@ namespace API.Area.Admin.Controller
         {
             return _context.Rooms.Any(e => e.RoomId == id);
         }
+        [HttpGet("byRoom/{roomId}")]
+        public async Task<ActionResult<object>> GetAccountsByRoom(int roomId)
+        {
+            // Lấy Room và các Account trong Room
+            var room = await _context.Rooms
+                .Include(r => r.Accounts) // load luôn Accounts
+                .FirstOrDefaultAsync(r => r.RoomId == roomId && r.Status);
+
+            if (room == null)
+                return NotFound($"RoomId={roomId} không tồn tại hoặc không active.");
+
+            // Lọc sinh viên active
+            var students = room.Accounts
+                .Where(a => a.Role == 0 && a.Status)
+                .Select(a => new
+                {
+                    a.AccountId,
+                    a.Name,
+                    a.FullName,
+                    a.Email,
+                    a.Status
+                })
+                .ToList();
+
+            return new
+            {
+                roomId = room.RoomId,
+                roomName = room.Name,
+                students = students
+            };
+        }
+
+        [HttpGet("byAccount/{accountId}")]
+        public async Task<ActionResult<object>> GetRoomByAccount(int accountId)
+        {
+            // Tìm Room mà account này thuộc vào
+            var room = await _context.Rooms
+                .Where(r => r.Accounts.Any(a => a.AccountId == accountId && a.Status))
+                .Select(r => new
+                {
+                    r.RoomId,
+                    r.Name,
+                    r.Status,
+                    Students = r.Accounts
+                        .Where(a => a.Role == 0 && a.Status) // Chỉ lấy sinh viên active
+                        .Select(a => new
+                        {
+                            a.AccountId,
+                            a.Name,
+                            a.FullName,
+                            a.Email,
+                            a.Status
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (room == null)
+                return NotFound();
+
+            return room;
+        }
     }
 }
