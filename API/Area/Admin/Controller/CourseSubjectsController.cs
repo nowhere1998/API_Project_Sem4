@@ -123,19 +123,5 @@ namespace API.Area.Admin.Controller
         {
             return _context.CourseSubject.Any(e => e.CourseSubjectId == id);
         }
-        [HttpGet("byCourse/{courseId}")]
-        public async Task<ActionResult<IEnumerable<CourseSubject>>> GetCourseSubjectsByCourse(int courseId)
-        {
-            var courseSubjects = await _context.CourseSubject
-                .Where(cs => cs.CourseId == courseId && cs.Status == true)
-                .ToListAsync();
-
-            if (courseSubjects == null || !courseSubjects.Any())
-            {
-                return NotFound();
-            }
-
-            return courseSubjects;
-        }
     }
 }

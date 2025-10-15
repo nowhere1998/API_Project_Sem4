@@ -287,50 +287,5 @@ namespace API.Area.Admin.Controller
         {
             return _context.Accounts.Any(e => e.AccountId == id);
         }
-        [HttpGet("studentsByAccount/{accountId}")]
-        public async Task<ActionResult<object>> GetStudentsByAccount(int accountId)
-        {
-            // Lấy account để biết RoomId
-            var account = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.AccountId == accountId);
-
-            if (account == null)
-                return NotFound($"AccountId={accountId} không tồn tại.");
-
-            // Lấy tất cả account trong Room
-            var allAccountsInRoom = await _context.Accounts
-                .Where(a => a.RoomId == account.RoomId)
-                .ToListAsync();
-
-            // Filter sinh viên active
-            var students = allAccountsInRoom
-                .Where(a => a.Role == 2 &&
-                            (a.Status == true || a.Status == true)) // nếu Status kiểu int hoặc bool
-                .Select(a => new
-                {
-                    a.AccountId,
-                    a.Name,
-                    a.FullName,
-                    a.Email,
-                    a.Status
-                })
-                .ToList();
-
-            // Lấy thông tin Room
-            var room = await _context.Rooms
-                .Where(r => r.RoomId == account.RoomId)
-                .Select(r => new { r.RoomId, r.Name })
-                .FirstOrDefaultAsync();
-
-            return new
-            {
-                Room = room,
-                Students = students
-            };
-        }
-
-
-
-
     }
 }

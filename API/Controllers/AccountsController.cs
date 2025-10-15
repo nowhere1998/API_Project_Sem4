@@ -1,126 +1,108 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using API.Models;
-//using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+﻿using API.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-//namespace API.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class AccountsController : ControllerBase
-//    {
-//        private readonly FlutterContext _context;
+namespace API.Controllers
+{
+	[Route("api/[controller]")]
+	[ApiController]
+	public class AccountsController : ControllerBase
+	{
+		private readonly FlutterContext _context;
 
-//        public AccountsController(FlutterContext context)
-//        {
-//            _context = context;
-//        }
+		public AccountsController(FlutterContext context)
+		{
+			_context = context;
+		}
+		[HttpGet("retake/{studentId}")]
+		public async Task<ActionResult<IEnumerable<object>>> GetRetakeExams(int studentId)
+		{
+			var student = await _context.Accounts.FindAsync(studentId);
+			if (student == null)
+				return NotFound(new { message = "Không tìm thấy sinh viên." });
 
-//        // GET: api/Accounts
-//        [HttpGet]
-//        public async Task<ActionResult<IEnumerable<Account>>> GetAccount()
-//        {
-//            return await _context.Accounts.ToListAsync();
-//        }
+			if (student.Role != 2)
+				return BadRequest(new { message = "Chỉ sinh viên mới có danh sách thi lại." });
 
-//        // GET: api/Accounts/5
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult<Account>> GetAccount(int id)
-//        {
-//            var account = await _context.Accounts.FindAsync(id);
+			var failedSubjects = await _context.AccountExams
+				.Include(ae => ae.Exam)
+					.ThenInclude(e => e.CourseSubject)
+						.ThenInclude(cs => cs.Subject)
+				.Include(ae => ae.Exam.CourseSubject)
+					.ThenInclude(cs => cs.Course)
+				.Include(ae => ae.Exam.Room)
+				.Where(ae => ae.StudentId == studentId && !ae.IsPass && ae.Status)
+				.Select(ae => new
+				{
+					SubjectName = ae.Exam.CourseSubject != null && ae.Exam.CourseSubject.Subject != null
+						? ae.Exam.CourseSubject.Subject.Name
+						: "Không rõ môn",
 
-//            if (account == null)
-//            {
-//                return NotFound();
-//            }
+					CourseName = ae.Exam.CourseSubject != null && ae.Exam.CourseSubject.Course != null
+						? ae.Exam.CourseSubject.Course.Name
+						: "Không rõ khóa học",
 
-//            return account;
-//        }
+					ExamId = ae.Exam.ExamId,
+					ExamName = ae.Exam.Name ?? "Không rõ tên",
+					ExamDay = ae.Exam.ExamDay,
+					ExamTime = ae.Exam.ExamTime != null
+	? ae.Exam.ExamTime.ToString(@"hh\:mm")
+	: "Không rõ giờ",
 
-//        // PUT: api/Accounts/5
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPut("{id}")]
-//        public async Task<IActionResult> PutAccount(int id, Account account)
-//        {
-//            if (id != account.AccountId)
-//            {
-//                return BadRequest();
-//            }
+					RoomName = ae.Exam.Room != null ? ae.Exam.Room.Name : "Không rõ phòng",
+					Fee = ae.Exam.Fee,
+					Score = ae.Score,
+					ae.IsPass
+				})
+				.ToListAsync();
 
-//            _context.Entry(account).State = EntityState.Modified;
+			if (!failedSubjects.Any())
+				return NotFound(new { message = "Sinh viên không có môn nào cần thi lại." });
 
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateConcurrencyException)
-//            {
-//                if (!AccountExists(id))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
+			return Ok(failedSubjects);
+		}
 
-//            return NoContent();
-//        }
+		[HttpGet("studentsByAccount/{accountId}")]
+		public async Task<ActionResult<object>> GetStudentsByAccount(int accountId)
+		{
+			// Lấy account để biết RoomId
+			var account = await _context.Accounts
+				.FirstOrDefaultAsync(a => a.AccountId == accountId);
 
-//        // POST: api/Accounts
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPost]
-//        public async Task<ActionResult<Account>> PostAccount(Account account)
-//        {
-//            _context.Accounts.Add(account);
-//            await _context.SaveChangesAsync();
+			if (account == null)
+				return NotFound($"AccountId={accountId} không tồn tại.");
 
-//            return CreatedAtAction("GetAccount", new { id = account.AccountId }, account);
-//        }
+			// Lấy tất cả account trong Room
+			var allAccountsInRoom = await _context.Accounts
+				.Where(a => a.RoomId == account.RoomId)
+				.ToListAsync();
 
-//        // DELETE: api/Accounts/5
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> DeleteAccount(int id)
-//        {
-//            var account = await _context.Accounts.FindAsync(id);
-//            if (account == null)
-//            {
-//                return NotFound();
-//            }
+			// Filter sinh viên active
+			var students = allAccountsInRoom
+				.Where(a => a.Role == 2 &&
+							(a.Status == true || a.Status == true)) // nếu Status kiểu int hoặc bool
+				.Select(a => new
+				{
+					a.AccountId,
+					a.Name,
+					a.FullName,
+					a.Email,
+					a.Status
+				})
+				.ToList();
 
-//            _context.Accounts.Remove(account);
-//            await _context.SaveChangesAsync();
+			// Lấy thông tin Room
+			var room = await _context.Rooms
+				.Where(r => r.RoomId == account.RoomId)
+				.Select(r => new { r.RoomId, r.Name })
+				.FirstOrDefaultAsync();
 
-//            return NoContent();
-//        }
-
-//        // POST: api/Accounts/login
-//        [HttpPost("login")]
-//        public async Task<ActionResult<Account>> Login([FromBody] LoginRequest loginRequest)
-//        {
-//            var account = await _context.Accounts
-//                .FirstOrDefaultAsync(acc =>
-//                    acc.Email == loginRequest.Email &&
-//                acc.Password == loginRequest.Password
-//                );
-
-//            if (account == null)
-//            {
-//                return Unauthorized(new { message = "Invalid email or password" });
-//            }
-
-//            return Ok(account);
-//        }
-
-//        private bool AccountExists(int id)
-//        {
-//            return _context.Accounts.Any(e => e.AccountId == id);
-//        }
-//    }
-//}
+			return new
+			{
+				Room = room,
+				Students = students
+			};
+		}
+	}
+}
