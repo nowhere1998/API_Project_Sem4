@@ -85,7 +85,7 @@ namespace API.Area.Admin.Controller
             {
                 StudentId = req.StudentId,
                 ExamId = req.ExamId,
-                SubjectId = exam.CourseSubject.SubjectId,
+                CourseSubjectId = exam.CourseSubject.SubjectId,
                 Status = false,                     // Chưa thanh toán
                 payment = "Chưa thanh toán",        // ✅ tránh null
                 CreatedAt = DateTime.UtcNow,
@@ -101,7 +101,7 @@ namespace API.Area.Admin.Controller
                 RegisterId = register.RegisterId,
                 StudentId = register.StudentId,
                 ExamId = register.ExamId,
-                SubjectId = register.SubjectId,
+                SubjectId = register.CourseSubjectId,
                 Email = register.Email,
                 Status = register.Status,
                 Payment = register.payment,
@@ -217,7 +217,7 @@ namespace API.Area.Admin.Controller
                 RegisterId = reg.RegisterId,
                 StudentId = reg.StudentId,
                 ExamId = reg.ExamId,
-                SubjectId = reg.SubjectId,
+                SubjectId = reg.CourseSubjectId,
                 Email = reg.Email,
                 Status = reg.Status,
                 Payment = reg.payment,
