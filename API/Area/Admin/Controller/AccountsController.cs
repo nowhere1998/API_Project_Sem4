@@ -202,8 +202,8 @@ namespace API.Area.Admin.Controller
             var account = await _context.Accounts
                 .FirstOrDefaultAsync(acc =>
                     acc.Email == loginRequest.Email &&
-                acc.Password == loginRequest.Password
-                );
+                acc.Password == Cipher.GenerateMD5(loginRequest.Password)
+				);
 
             if (account == null)
             {
