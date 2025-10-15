@@ -15,6 +15,8 @@ namespace API.Models
         [Required]
         public int AccountId { get; set; }
         [Required]
+        public int CourseSubjectId { get; set; }
+        [Required]
         public DateTime ExamDay { get; set; }
         [Required] 
         public TimeSpan ExamTime { get; set; }

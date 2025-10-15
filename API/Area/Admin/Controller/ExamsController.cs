@@ -30,32 +30,44 @@ namespace API.Area.Admin.Controller
             {
                 query = query.Where(e => e.Name.ToLower().Contains(name.ToLower().Trim()));
             }
-            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
+
+            if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
+                bool isActive = status.ToLower().Trim() == "true";
+                query = query.Where(e => e.Status == isActive);
             }
 
             var result = await query
                 .Include(e => e.Account)
+                .Include(e => e.CourseSubject)
+                    .ThenInclude(cs => cs.Subject)
+                .Include(e => e.CourseSubject)
+                    .ThenInclude(cs => cs.Course)
                 .Include(e => e.Room)
                 .Select(e => new ExamDto
                 {
                     ExamId = e.ExamId,
                     Name = e.Name,
-
                     AccountId = e.AccountId,
                     AccountName = e.Account.Name,
                     ExamDayString = e.ExamDay.ToString("yyyy-MM-dd"),
                     ExamTimeString = e.ExamTime.ToString(@"hh\:mm"),
+                    CourseSubjectId = e.CourseSubjectId,
+                    SubjectName = e.CourseSubject.Subject != null ? e.CourseSubject.Subject.Name : "Không rõ môn",
+                    CourseName = e.CourseSubject.Course != null ? e.CourseSubject.Course.Name : "Không rõ khóa học",
                     RoomId = e.RoomId,
                     RoomName = e.Room.Name,
+                    ExamDay = e.ExamDay,
+                    ExamTime = e.ExamTime,
                     Status = e.Status,
                     Fee = e.Fee,
+                    CreatedAt = e.CreatedAt
                 })
                 .ToListAsync();
 
             return result;
         }
+
 
         // GET: api/Exams/5
         [HttpGet("{id}")]
@@ -142,5 +154,55 @@ namespace API.Area.Admin.Controller
         {
             return _context.Exams.Any(e => e.ExamId == id);
         }
+        [HttpGet("retake/{studentId}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetRetakeExams(int studentId)
+        {
+            var student = await _context.Accounts.FindAsync(studentId);
+            if (student == null)
+                return NotFound(new { message = "Không tìm thấy sinh viên." });
+
+            if (student.Role != 2)
+                return BadRequest(new { message = "Chỉ sinh viên mới có danh sách thi lại." });
+
+            var failedSubjects = await _context.AccountExams
+                .Include(ae => ae.Exam)
+                    .ThenInclude(e => e.CourseSubject)
+                        .ThenInclude(cs => cs.Subject)
+                .Include(ae => ae.Exam.CourseSubject)
+                    .ThenInclude(cs => cs.Course)
+                .Include(ae => ae.Exam.Room)
+                .Where(ae => ae.StudentId == studentId && !ae.IsPass && ae.Status)
+                .Select(ae => new
+                {
+                    ae.SubjectId,
+                    SubjectName = ae.Exam.CourseSubject != null && ae.Exam.CourseSubject.Subject != null
+                        ? ae.Exam.CourseSubject.Subject.Name
+                        : "Không rõ môn",
+
+                    CourseName = ae.Exam.CourseSubject != null && ae.Exam.CourseSubject.Course != null
+                        ? ae.Exam.CourseSubject.Course.Name
+                        : "Không rõ khóa học",
+
+                    ExamId = ae.Exam.ExamId,
+                    ExamName = ae.Exam.Name ?? "Không rõ tên",
+                    ExamDay = ae.Exam.ExamDay,
+                    ExamTime = ae.Exam.ExamTime != null
+    ? ae.Exam.ExamTime.ToString(@"hh\:mm")
+    : "Không rõ giờ",
+
+                    RoomName = ae.Exam.Room != null ? ae.Exam.Room.Name : "Không rõ phòng",
+                    Fee = ae.Exam.Fee,
+                    Score = ae.Score,
+                    ae.IsPass
+                })
+                .ToListAsync();
+
+            if (!failedSubjects.Any())
+                return NotFound(new { message = "Sinh viên không có môn nào cần thi lại." });
+
+            return Ok(failedSubjects);
+        }
+
+
     }
 }

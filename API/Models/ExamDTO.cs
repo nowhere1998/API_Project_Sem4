@@ -8,6 +8,10 @@
         public int AccountId { get; set; }
         public string? AccountName { get; set; }
 
+        public int CourseSubjectId { get; set; }
+        public string? SubjectName { get; set; }
+        public string? CourseName { get; set; }
+
         public int RoomId { get; set; }
         public string? RoomName { get; set; }
 

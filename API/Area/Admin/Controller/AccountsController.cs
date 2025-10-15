@@ -22,29 +22,99 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts([FromQuery] string? name, int? role, string? status)
+        public async Task<ActionResult<IEnumerable<object>>> GetAccounts(
+    [FromQuery] string? name,
+    [FromQuery] int? role,
+    [FromQuery] string? status,
+    [FromQuery] int? accountId)  // filter theo accountId
         {
             var query = _context.Accounts.AsQueryable();
+
+            // Lọc theo accountId nếu có
+            if (accountId.HasValue)
+            {
+                query = query.Where(acc => acc.AccountId == accountId.Value);
+            }
+
+            // Lọc theo name
             if (!string.IsNullOrWhiteSpace(name))
             {
-                query = query.Where(acc => 
-                    (
-                        acc.Name.ToLower().Contains(name.ToLower().Trim()) ||
-                        acc.Email.ToLower().Contains(name.ToLower().Trim()) ||
-                        acc.FullName.ToLower().Contains(name.ToLower().Trim())
-                    )
+                string lowerName = name.ToLower().Trim();
+                query = query.Where(acc =>
+                    acc.Name.ToLower().Contains(lowerName) ||
+                    acc.Email.ToLower().Contains(lowerName) ||
+                    acc.FullName.ToLower().Contains(lowerName)
                 );
             }
+
+            // Lọc theo role
             if (role.HasValue)
             {
-                query = query.Where(acc => acc.Role == role);
+                query = query.Where(acc => acc.Role == role.Value);
             }
-            if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
+
+            // Lọc theo status
+            if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
+                if (bool.TryParse(status.Trim(), out bool statusBool))
+                {
+                    query = query.Where(acc => acc.Status == statusBool);
+                }
             }
-            return await query.ToListAsync();
+
+            // Nếu filter theo accountId, trả kèm Room info
+            if (accountId.HasValue)
+            {
+                var result = await query
+                    .Include(a => a.Room)
+                    .Select(a => new
+                    {
+                        a.AccountId,
+                        a.Name,
+                        a.FullName,
+                        a.Email,
+                        a.Status,
+                        Room = a.Room == null ? null : new
+                        {
+                            a.Room.RoomId,
+                            a.Room.Name,
+                            a.Room.Status,
+                            Students = a.Room.Accounts
+                                .Where(s => s.Role == 0 && s.Status) // chỉ lấy sinh viên active
+                                .Select(s => new
+                                {
+                                    s.AccountId,
+                                    s.Name,
+                                    s.FullName,
+                                    s.Email,
+                                    s.Status
+                                })
+                                .ToList()
+                        }
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (result == null)
+                    return NotFound();
+
+                return Ok(result);
+            }
+
+            // Nếu không filter theo accountId, trả danh sách account bình thường
+            var accounts = await query
+                .Select(a => new
+                {
+                    a.AccountId,
+                    a.Name,
+                    a.FullName,
+                    a.Email,
+                    a.Status
+                })
+                .ToListAsync();
+
+            return Ok(accounts);
         }
+
 
         // GET: api/Accounts/5
         [HttpGet("{id}")]
@@ -217,5 +287,50 @@ namespace API.Area.Admin.Controller
         {
             return _context.Accounts.Any(e => e.AccountId == id);
         }
+        [HttpGet("studentsByAccount/{accountId}")]
+        public async Task<ActionResult<object>> GetStudentsByAccount(int accountId)
+        {
+            // Lấy account để biết RoomId
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.AccountId == accountId);
+
+            if (account == null)
+                return NotFound($"AccountId={accountId} không tồn tại.");
+
+            // Lấy tất cả account trong Room
+            var allAccountsInRoom = await _context.Accounts
+                .Where(a => a.RoomId == account.RoomId)
+                .ToListAsync();
+
+            // Filter sinh viên active
+            var students = allAccountsInRoom
+                .Where(a => a.Role == 2 &&
+                            (a.Status == true || a.Status == true)) // nếu Status kiểu int hoặc bool
+                .Select(a => new
+                {
+                    a.AccountId,
+                    a.Name,
+                    a.FullName,
+                    a.Email,
+                    a.Status
+                })
+                .ToList();
+
+            // Lấy thông tin Room
+            var room = await _context.Rooms
+                .Where(r => r.RoomId == account.RoomId)
+                .Select(r => new { r.RoomId, r.Name })
+                .FirstOrDefaultAsync();
+
+            return new
+            {
+                Room = room,
+                Students = students
+            };
+        }
+
+
+
+
     }
 }
