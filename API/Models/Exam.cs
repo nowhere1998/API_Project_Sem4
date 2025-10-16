@@ -15,8 +15,6 @@ namespace API.Models
         [Required]
         public int AccountId { get; set; }
         [Required]
-        public int CourseSubjectId { get; set; }
-        [Required]
         public DateTime ExamDay { get; set; }
         [Required] 
         public TimeSpan ExamTime { get; set; }
@@ -26,9 +24,7 @@ namespace API.Models
         public ICollection<AccountExam> AccountExams { get; set; } = new HashSet<AccountExam>();
         [ForeignKey("AccountId")]
         public Account? Account { get; set; }
-		[ForeignKey("CourseSubjectId")]
-		public CourseSubject? CourseSubject { get; set; }
-		[ForeignKey("RoomId")]
+        [ForeignKey("RoomId")]
         public Room? Room { get; set; }
         public ICollection<Register> Registers { get; set; } = new HashSet<Register>();
     }

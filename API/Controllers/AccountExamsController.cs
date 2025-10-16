@@ -16,40 +16,39 @@ namespace API.Controllers
 			_context = context;
 		}
         [HttpGet("byStudent/{studentId}")]
-        public async Task<ActionResult<IEnumerable<AccountExamDto>>> GetAccountExamsByStudent(int studentId)
+        public async Task<ActionResult> GetAccountExamsByStudent(int studentId)
         {
-            // Lấy tất cả AccountExam của sinh viên, bao gồm Exam, Student và Room
-            var accountExams = await _context.AccountExams
+            var result = await _context.AccountExams
                 .Where(ae => ae.StudentId == studentId && ae.Status)
-                .Include(ae => ae.Student)
-                    .ThenInclude(s => s.Room)
                 .Include(ae => ae.Exam)
                 .Include(ae => ae.CourseSubject)
                     .ThenInclude(cs => cs.Course)
                 .Include(ae => ae.CourseSubject)
                     .ThenInclude(cs => cs.Subject)
+                .Select(ae => new {
+                    ae.AccountExamId,
+                    ae.ExamId,
+                    ExamName = ae.Exam.Name,
+                    ae.StudentId,
+                    StudentName = ae.Student.Name,
+                    ae.Score,
+                    ae.Record,
+                    ae.IsPass,
+                    ae.Status,
+                    RoomName = ae.Student.Room.Name,
+                    CourseName = ae.CourseSubject.Course.Name,
+                    SubjectName = ae.CourseSubject.Subject.Name
+                })
                 .ToListAsync();
 
-            if (!accountExams.Any())
+            if (!result.Any())
                 return NotFound($"Không tìm thấy điểm thi cho sinh viên ID: {studentId}");
-
-            // Map sang DTO
-            var result = accountExams.Select(ae => new AccountExamDto
-            {
-                AccountExamId = ae.AccountExamId,
-                ExamId = ae.ExamId,
-                ExamName = ae.Exam?.Name ?? "",
-                StudentId = ae.StudentId,
-                StudentName = ae.Student?.Name ?? "",
-                Score = ae.Score,
-                Record = ae.Record,
-                IsPass = ae.IsPass,
-                Status = ae.Status,
-                RoomName = ae.Student?.Room?.Name ?? "",
-            }).ToList();
 
             return Ok(result);
         }
+
+
+
 
 
 

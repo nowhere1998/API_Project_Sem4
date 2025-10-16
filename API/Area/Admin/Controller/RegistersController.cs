@@ -65,14 +65,11 @@ namespace API.Area.Admin.Controller
 
             var exam = await _context.Exams
                 .Include(e => e.Room)
-                .Include(e => e.CourseSubject)
                 .FirstOrDefaultAsync(e => e.ExamId == req.ExamId);
 
             if (exam == null)
                 return BadRequest(new { message = "Kỳ thi không tồn tại." });
 
-            if (exam.CourseSubject == null)
-                return BadRequest(new { message = "Exam này chưa liên kết môn học (Subject)." });
 
             // Kiểm tra trùng
             var exists = await _context.Registers.AnyAsync(r =>
@@ -85,7 +82,6 @@ namespace API.Area.Admin.Controller
             {
                 StudentId = req.StudentId,
                 ExamId = req.ExamId,
-                CourseSubjectId = exam.CourseSubject.SubjectId,
                 Status = false,                     // Chưa thanh toán
                 payment = "Chưa thanh toán",        // ✅ tránh null
                 CreatedAt = DateTime.UtcNow,
@@ -145,90 +141,15 @@ namespace API.Area.Admin.Controller
         }
 
         // GET: api/admin/registers/student/5/exams
-        [HttpGet("student/{studentId}/exams")]
-        public async Task<ActionResult<IEnumerable<object>>> GetExamsByStudent(int studentId)
-        {
-            var exams = await _context.Registers
-                .Where(r => r.StudentId == studentId && r.Status)
-                .Include(r => r.Exam)
-                .ThenInclude(e => e.Room)
-                .Select(r => new
-                {
-                    ExamId = r.Exam.ExamId,
-                    ExamName = r.Exam.Name,
-                    ExamDay = r.Exam.ExamDay,
-                    ExamTime = r.Exam.ExamTime.ToString(@"hh\:mm"),
-                    RoomName = r.Exam.Room != null ? r.Exam.Room.Name : null
-                })
-                .ToListAsync();
-
-            if (!exams.Any())
-                return NotFound(new { message = "Không tìm thấy lịch thi nào cho sinh viên này." });
-
-            return Ok(exams);
-        }
+        
 
         // POST: api/admin/registers/{registerId}/create-fake-qrcode
-        [HttpPost("{registerId}/create-fake-qrcode")]
-        public async Task<ActionResult<object>> CreateFakeQr(int registerId)
-        {
-            var reg = await _context.Registers
-                .Include(r => r.Exam)
-                .FirstOrDefaultAsync(r => r.RegisterId == registerId);
-
-            if (reg == null)
-                return NotFound();
-
-            var payload = new
-            {
-                registerId = reg.RegisterId,
-                studentId = reg.StudentId,
-                examId = reg.ExamId,
-                examName = reg.Exam?.Name,
-                amount = reg.Exam?.Fee ?? 0,
-                timestamp = DateTime.UtcNow
-            };
-
-            return Ok(new { qr = System.Text.Json.JsonSerializer.Serialize(payload) });
-        }
+        
 
         // POST: api/admin/registers/{registerId}/confirm-payment
         // POST: api/admin/registers/{registerId}/confirm-payment
         // POST: api/admin/registers/{registerId}/confirm-payment
-        [HttpPost("{registerId}/confirm-payment")]
-        public async Task<ActionResult<RegisterDto>> ConfirmPayment(int registerId, [FromBody] ConfirmPaymentRequest req)
-        {
-            var reg = await _context.Registers
-                .Include(r => r.Exam)
-                .ThenInclude(e => e.Room)
-                .FirstOrDefaultAsync(r => r.RegisterId == registerId);
-
-            if (reg == null)
-                return NotFound();
-
-            reg.payment = req.method;
-            reg.Status = req.success; // true nếu thanh toán thành công
-            _context.Entry(reg).State = EntityState.Modified;
-
-            await _context.SaveChangesAsync();
-
-            var dto = new RegisterDto
-            {
-                RegisterId = reg.RegisterId,
-                StudentId = reg.StudentId,
-                ExamId = reg.ExamId,
-                SubjectId = reg.CourseSubjectId,
-                Email = reg.Email,
-                Status = reg.Status,
-                Payment = reg.payment,
-                CreatedAt = reg.CreatedAt,
-                ExamName = reg.Exam?.Name,
-                ExamFee = reg.Exam?.Fee ?? 0,
-                RoomName = reg.Exam?.Room?.Name
-            };
-
-            return Ok(dto);
-        }
+        
 
 
 
@@ -250,30 +171,7 @@ namespace API.Area.Admin.Controller
             return NoContent();
         }
         // GET: api/admin/registers/student/{studentId}/exam-schedules
-        [HttpGet("student/{studentId}/exam-schedules")]
-        public async Task<ActionResult<IEnumerable<object>>> GetExamSchedulesByStudent(int studentId)
-        {
-            var registers = await _context.Registers
-                .Where(r => r.StudentId == studentId && r.Status)
-                .Include(r => r.Exam)
-                    .ThenInclude(e => e.CourseSubject)
-                        .ThenInclude(cs => cs.Course)
-                .ToListAsync(); // <--- Lấy dữ liệu về trước
-
-            if (!registers.Any())
-                return NotFound(new { message = "Không có lịch thi nào cho sinh viên này." });
-
-            // Xử lý format sau khi đã lấy ra khỏi EF Core
-            var result = registers.Select(r => new
-            {
-                CourseName = r.Exam?.CourseSubject?.Course?.Name ?? "Chưa xác định",
-                ExamName = r.Exam?.Name ?? "Chưa xác định",
-                ExamDay = r.Exam?.ExamDay,
-                ExamTime = r.Exam?.ExamTime.ToString(@"hh\:mm") // Giờ xử lý bằng C#
-            });
-
-            return Ok(result);
-        }
+        
 
 
     }

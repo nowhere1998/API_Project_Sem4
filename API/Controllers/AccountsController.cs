@@ -15,55 +15,65 @@ namespace API.Controllers
 		{
 			_context = context;
 		}
-		[HttpGet("retake/{studentId}")]
-		public async Task<ActionResult<IEnumerable<object>>> GetRetakeExams(int studentId)
-		{
-			var student = await _context.Accounts.FindAsync(studentId);
-			if (student == null)
-				return NotFound(new { message = "Không tìm thấy sinh viên." });
+        [HttpGet("retake/{studentId}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetRetakeExams(int studentId)
+        {
+            // Lấy sinh viên
+            var student = await _context.Accounts.FindAsync(studentId);
+            if (student == null)
+                return NotFound(new { message = "Không tìm thấy sinh viên." });
 
-			if (student.Role != 2)
-				return BadRequest(new { message = "Chỉ sinh viên mới có danh sách thi lại." });
+            if (student.Role != 2) // 0 = sinh viên
+                return BadRequest(new { message = "Chỉ sinh viên mới có danh sách thi lại." });
 
-			var failedSubjects = await _context.AccountExams
-				.Include(ae => ae.Exam)
-					.ThenInclude(e => e.CourseSubject)
-						.ThenInclude(cs => cs.Subject)
-				.Include(ae => ae.Exam.CourseSubject)
-					.ThenInclude(cs => cs.Course)
-				.Include(ae => ae.Exam.Room)
-				.Where(ae => ae.StudentId == studentId && !ae.IsPass && ae.Status)
-				.Select(ae => new
-				{
-					SubjectName = ae.Exam.CourseSubject != null && ae.Exam.CourseSubject.Subject != null
-						? ae.Exam.CourseSubject.Subject.Name
-						: "Không rõ môn",
+            // Lấy danh sách môn thi lại (IsPass = false)
+            var failedExams = await _context.AccountExams
+                .Where(ae => ae.StudentId == studentId && !ae.IsPass && ae.Status)
+                .Include(ae => ae.Exam)
+                    .ThenInclude(e => e.Room)
+                .Include(ae => ae.CourseSubject)
+                    .ThenInclude(cs => cs.Course)
+                .Include(ae => ae.CourseSubject)
+                    .ThenInclude(cs => cs.Subject)
+                .Select(ae => new
+                {
+                    // Thông tin môn học
+                    SubjectName = ae.CourseSubject != null && ae.CourseSubject.Subject != null
+                        ? ae.CourseSubject.Subject.Name
+                        : "Không rõ môn",
+                    CourseName = ae.CourseSubject != null && ae.CourseSubject.Course != null
+                        ? ae.CourseSubject.Course.Name
+                        : "Không rõ khóa",
 
-					CourseName = ae.Exam.CourseSubject != null && ae.Exam.CourseSubject.Course != null
-						? ae.Exam.CourseSubject.Course.Name
-						: "Không rõ khóa học",
+                    // Thông tin kỳ thi
+                    ExamId = ae.Exam != null ? ae.Exam.ExamId : 0,
+                    ExamName = ae.Exam != null ? ae.Exam.Name : "Không rõ tên",
+                    ExamDay = ae.Exam != null ? ae.Exam.ExamDay : (DateTime?)null,
+                    ExamTime = ae.Exam != null ? ae.Exam.ExamTime.ToString(@"hh\:mm") : "Không rõ giờ",
+                    RoomName = ae.Exam != null && ae.Exam.Room != null
+                        ? ae.Exam.Room.Name
+                        : "Không rõ phòng",
 
-					ExamId = ae.Exam.ExamId,
-					ExamName = ae.Exam.Name ?? "Không rõ tên",
-					ExamDay = ae.Exam.ExamDay,
-					ExamTime = ae.Exam.ExamTime != null
-	? ae.Exam.ExamTime.ToString(@"hh\:mm")
-	: "Không rõ giờ",
+                    // Thông tin khác
+                    Score = (float)ae.Score, // Ép kiểu từ double sang float
+                    Fee = ae.Exam != null ? (float)ae.Exam.Fee : 0f, // Ép kiểu từ double sang float
+                    ae.IsPass
+                })
+                .ToListAsync();
 
-					RoomName = ae.Exam.Room != null ? ae.Exam.Room.Name : "Không rõ phòng",
-					Fee = ae.Exam.Fee,
-					Score = ae.Score,
-					ae.IsPass
-				})
-				.ToListAsync();
+            if (!failedExams.Any())
+                return NotFound(new { message = "Sinh viên không có môn nào cần thi lại." });
 
-			if (!failedSubjects.Any())
-				return NotFound(new { message = "Sinh viên không có môn nào cần thi lại." });
+            return Ok(failedExams);
+        }
 
-			return Ok(failedSubjects);
-		}
 
-		[HttpGet("studentsByAccount/{accountId}")]
+
+
+
+
+
+        [HttpGet("studentsByAccount/{accountId}")]
 		public async Task<ActionResult<object>> GetStudentsByAccount(int accountId)
 		{
 			// Lấy account để biết RoomId

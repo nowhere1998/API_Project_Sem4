@@ -39,10 +39,6 @@ namespace API.Area.Admin.Controller
 
             var result = await query
                 .Include(e => e.Account)
-                .Include(e => e.CourseSubject)
-                    .ThenInclude(cs => cs.Subject)
-                .Include(e => e.CourseSubject)
-                    .ThenInclude(cs => cs.Course)
                 .Include(e => e.Room)
                 .Select(e => new ExamDto
                 {
@@ -52,9 +48,6 @@ namespace API.Area.Admin.Controller
                     AccountName = e.Account.Name,
                     ExamDayString = e.ExamDay.ToString("yyyy-MM-dd"),
                     ExamTimeString = e.ExamTime.ToString(@"hh\:mm"),
-                    CourseSubjectId = e.CourseSubjectId,
-                    SubjectName = e.CourseSubject.Subject != null ? e.CourseSubject.Subject.Name : "Không rõ môn",
-                    CourseName = e.CourseSubject.Course != null ? e.CourseSubject.Course.Name : "Không rõ khóa học",
                     RoomId = e.RoomId,
                     RoomName = e.Room.Name,
                     Status = e.Status,

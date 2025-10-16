@@ -18,7 +18,7 @@ namespace API.Models
         [Required]
         public string? Email { get; set; }
         public bool Status { get; set; } = true;
-        public string payment {  get; set; } = "Chưa thanh toán";
+        public string payment {  get; set; }
         public DateTime CreatedAt { get; set; }
         [ForeignKey("StudentId")]
         public Account? Student { get; set; }
