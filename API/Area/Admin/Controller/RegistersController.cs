@@ -79,6 +79,7 @@ namespace API.Area.Admin.Controller
             StudentId = r.StudentId,
             StudentName = r.Student.Name,
             SubjectId = r.CourseSubject.SubjectId,
+            SubjectId = r.CourseSubject.SubjectName,
             ExamId = r.ExamId,
             Email = r.Email,
             Status = r.Status,
