@@ -22,98 +22,30 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetAccounts(
-    [FromQuery] string? name,
-    [FromQuery] int? role,
-    [FromQuery] string? status,
-    [FromQuery] int? accountId)  // filter theo accountId
+        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts([FromQuery] string? name, int? role, string? status)
         {
             var query = _context.Accounts.AsQueryable();
-
-            // Lọc theo accountId nếu có
-            if (accountId.HasValue)
-            {
-                query = query.Where(acc => acc.AccountId == accountId.Value);
-            }
-
-            // Lọc theo name
             if (!string.IsNullOrWhiteSpace(name))
             {
-                string lowerName = name.ToLower().Trim();
                 query = query.Where(acc =>
-                    acc.Name.ToLower().Contains(lowerName) ||
-                    acc.Email.ToLower().Contains(lowerName) ||
-                    acc.FullName.ToLower().Contains(lowerName)
+                    (
+                        acc.Name.ToLower().Contains(name.ToLower().Trim()) ||
+                        acc.Email.ToLower().Contains(name.ToLower().Trim()) ||
+                        acc.FullName.ToLower().Contains(name.ToLower().Trim())
+                    )
                 );
             }
-
-            // Lọc theo role
             if (role.HasValue)
             {
-                query = query.Where(acc => acc.Role == role.Value);
+                query = query.Where(acc => acc.Role == role);
             }
-
-            // Lọc theo status
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(status) && ( status.ToLower().Trim().Equals("true") || status.ToLower().Trim().Equals("false")))
             {
-                if (bool.TryParse(status.Trim(), out bool statusBool))
-                {
-                    query = query.Where(acc => acc.Status == statusBool);
-                }
+                query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
-
-            // Nếu filter theo accountId, trả kèm Room info
-            if (accountId.HasValue)
-            {
-                var result = await query
-                    .Include(a => a.Room)
-                    .Select(a => new
-                    {
-                        a.AccountId,
-                        a.Name,
-                        a.FullName,
-                        a.Email,
-                        a.Status,
-                        Room = a.Room == null ? null : new
-                        {
-                            a.Room.RoomId,
-                            a.Room.Name,
-                            a.Room.Status,
-                            Students = a.Room.Accounts
-                                .Where(s => s.Role == 0 && s.Status) // chỉ lấy sinh viên active
-                                .Select(s => new
-                                {
-                                    s.AccountId,
-                                    s.Name,
-                                    s.FullName,
-                                    s.Email,
-                                    s.Status
-                                })
-                                .ToList()
-                        }
-                    })
-                    .FirstOrDefaultAsync();
-
-                if (result == null)
-                    return NotFound();
-
-                return Ok(result);
-            }
-
-            // Nếu không filter theo accountId, trả danh sách account bình thường
-            var accounts = await query
-                .Select(a => new
-                {
-                    a.AccountId,
-                    a.Name,
-                    a.FullName,
-                    a.Email,
-                    a.Status
-                })
-                .ToListAsync();
-
-            return Ok(accounts);
+            return await query.ToListAsync();
         }
+
 
 
         // GET: api/Accounts/5

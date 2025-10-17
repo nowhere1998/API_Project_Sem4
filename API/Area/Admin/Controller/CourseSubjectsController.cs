@@ -22,7 +22,7 @@ namespace API.Area.Admin.Controller
 
         // GET: api/CourseSubjects
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CourseSubject>>> GetCourseSubject([FromQuery] string? name, string? status)
+        public async Task<ActionResult<IEnumerable<CourseSubjectDTO>>> GetCourseSubject([FromQuery] string? name, string? status)
         {
             var query = _context.CourseSubject.AsQueryable();
             //if (!string.IsNullOrWhiteSpace(name))
@@ -31,11 +31,24 @@ namespace API.Area.Admin.Controller
             //        r.Name.ToLower().Contains(name.ToLower().Trim())
             //    );
             //}
+            var result = query
+                .Include(cs => cs.Course)
+                .Include(cs => cs.Subject)
+                .Select(cs => new CourseSubjectDTO
+                {
+                    CourseSubjectId = cs.CourseSubjectId,
+                    SubjectId = cs.SubjectId,
+                    SubjectName = cs.Subject.Name,
+                    CourseId = cs.CourseId,
+                    CourseName = cs.Course.Name,
+                    Sem = cs.Sem,
+                    Status = cs.Status,
+                });
             if (!string.IsNullOrWhiteSpace(status) && status.ToLower().Trim().Equals("true"))
             {
-                query = query.Where(cs => cs.Status==bool.Parse(status.ToLower().Trim()));
+                result = result.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
-            return await query.ToListAsync();
+            return await result.ToListAsync();
         }
 
         // GET: api/CourseSubjects/5

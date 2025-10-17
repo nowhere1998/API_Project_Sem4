@@ -4,6 +4,7 @@
     {
         public int RegisterId { get; set; }
         public int StudentId { get; set; }
+        public string? StudentName { get; set; }
         public int ExamId { get; set; }
         public int SubjectId { get; set; }
         public string? Email { get; set; }
@@ -12,7 +13,7 @@
         public DateTime CreatedAt { get; set; }
         public string? ExamName { get; set; }
         public float ExamFee { get; set; }
-        public string? RoomName { get; set; }  // Thêm trường RoomName
+        public string? RoomName { get; set; }
 
     }
 

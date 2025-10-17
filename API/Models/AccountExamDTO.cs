@@ -5,6 +5,7 @@
         public int AccountExamId { get; set; }
         public int ExamId { get; set; }
         public string ExamName { get; set; } = string.Empty;
+        public int CourseSubjectId { get; set; }
         public int StudentId { get; set; }
         public string? StudentName { get; set; }
         public string? Subject { get; set; }
