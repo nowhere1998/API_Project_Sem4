@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(FlutterContext))]
-    [Migration("20251012064817_v1")]
+    [Migration("20251014044531_v1")]
     partial class v1
     {
         /// <inheritdoc />
@@ -36,7 +36,7 @@ namespace API.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DateOfBirth")
+                    b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
@@ -88,6 +88,9 @@ namespace API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AccountExamId"));
 
+                    b.Property<int>("CourseSubjectId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ExamId")
                         .HasColumnType("int");
 
@@ -106,10 +109,9 @@ namespace API.Migrations
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
                     b.HasKey("AccountExamId");
+
+                    b.HasIndex("CourseSubjectId");
 
                     b.HasIndex("ExamId");
 
@@ -349,6 +351,12 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Models.AccountExam", b =>
                 {
+                    b.HasOne("API.Models.CourseSubject", "CourseSubject")
+                        .WithMany("AccountExams")
+                        .HasForeignKey("CourseSubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("API.Models.Exam", "Exam")
                         .WithMany("AccountExams")
                         .HasForeignKey("ExamId")
@@ -360,6 +368,8 @@ namespace API.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CourseSubject");
 
                     b.Navigation("Exam");
 
@@ -478,6 +488,8 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Models.CourseSubject", b =>
                 {
+                    b.Navigation("AccountExams");
+
                     b.Navigation("Exams");
 
                     b.Navigation("Registers");

@@ -47,6 +47,7 @@ namespace API.Area.Admin.Controller
                     AccountExamId = ae.AccountExamId,
                     ExamId = ae.ExamId,
                     ExamName = ae.Exam.Name,
+                    CourseSubjectId = ae.CourseSubjectId,
                     StudentId = ae.StudentId,
                     StudentName = ae.Student.Name,
 
@@ -59,6 +60,7 @@ namespace API.Area.Admin.Controller
                     Score = ae.Score,
                     IsPass = ae.IsPass,
                     Status = ae.Status,
+                    Record = ae.Record,
                 })
                 .ToListAsync();
 
@@ -67,17 +69,44 @@ namespace API.Area.Admin.Controller
 
         // GET: api/AccountExams/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AccountExam>> GetAccountExam(int id)
+        public async Task<ActionResult<AccountExamDto>> GetAccountExam(int id)
         {
-            var accountExam = await _context.AccountExams.FindAsync(id);
+            var accountExam = await _context.AccountExams
+                .Include(ae => ae.Exam)
+                .Include(ae => ae.Student)
+                .Include(ae => ae.CourseSubject)
+                    .ThenInclude(cs => cs.Subject)
+                .Include(ae => ae.CourseSubject)
+                    .ThenInclude(cs => cs.Course)
+                .Where(ae => ae.AccountExamId == id)
+                .Select(ae => new AccountExamDto
+                {
+                    AccountExamId = ae.AccountExamId,
+                    ExamId = ae.ExamId,
+                    ExamName = ae.Exam.Name,
+                    CourseSubjectId = ae.CourseSubjectId,
+                    StudentId = ae.StudentId,
+                    StudentName = ae.Student.FullName, // hoặc .Name tùy model
+                    Subject = ae.CourseSubject.Subject.Name,
+                    SubjectId = ae.CourseSubject.SubjectId,
+                    Course = ae.CourseSubject.Course.Name,
+                    CourseId = ae.CourseSubject.CourseId,
+                    Score = ae.Score,
+                    IsPass = ae.IsPass,
+                    Record = ae.Record,
+                    RoomName = ae.Exam.Room.Name, // nếu Exam có Room
+                    Status = ae.Status
+                })
+                .FirstOrDefaultAsync();
 
             if (accountExam == null)
             {
                 return NotFound();
             }
 
-            return accountExam;
+            return Ok(accountExam);
         }
+
 
         // PUT: api/AccountExams/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

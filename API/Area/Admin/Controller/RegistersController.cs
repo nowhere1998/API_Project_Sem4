@@ -1,11 +1,12 @@
-﻿using System;
+﻿using API.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using API.Models;
 
 namespace API.Area.Admin.Controller
 {
@@ -22,9 +23,17 @@ namespace API.Area.Admin.Controller
 
         // GET: api/Registers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Register>>> GetRegisters([FromQuery] string? name, string? status)
+        public async Task<ActionResult<IEnumerable<RegisterDto>>> GetRegisters([FromQuery] string? name, string? status)
         {
-            var query = _context.Registers.AsQueryable();
+            var query = _context.Registers
+                        .Include(r => r.StudentId)
+                        .Include(r => r.Exam)
+                            .ThenInclude(e => e.Room)
+                        .Include(r => r.CourseSubject)
+                            .ThenInclude(cs => cs.Subject)
+                        .Include(r => r.CourseSubject)
+                            .ThenInclude(cs => cs.Course)
+                        .AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Where(r =>
@@ -35,19 +44,54 @@ namespace API.Area.Admin.Controller
             {
                 query = query.Where(cs => cs.Status == bool.Parse(status.ToLower().Trim()));
             }
-            return await query.ToListAsync();
+            var result = await query.Select(r => new RegisterDto
+            {
+                StudentId = r.StudentId,
+                StudentName = r.Student.Name,
+                SubjectId = r.CourseSubject.SubjectId,
+                ExamId = r.ExamId,
+                Email = r.Email,
+                Status = r.Status,
+                Payment = r.payment,
+                CreatedAt = r.CreatedAt,
+                ExamName = r.Exam.Name,
+                RoomName = r.Exam.Room.Name,
+                ExamFee = r.Exam.Fee
+            }).ToListAsync();
+            return result;
         }
 
         // GET: api/Registers/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Register>> GetRegister(int id)
+        public async Task<ActionResult<RegisterDto>> GetRegister(int id)
         {
-            var register = await _context.Registers.FindAsync(id);
+            var register = await _context.Registers
+                                .Include(r => r.Student)
+                                .Include(r => r.Exam)
+                                    .ThenInclude(e => e.Room)
+                                .Include(r => r.CourseSubject)
+                                    .ThenInclude(cs => cs.Subject)
+                                .Include(r => r.CourseSubject)
+                                    .ThenInclude(cs => cs.Course)
+                                .Where(r => r.RegisterId == id) 
+        .Select(r => new RegisterDto
+        {
+            StudentId = r.StudentId,
+            StudentName = r.Student.Name,
+            SubjectId = r.CourseSubject.SubjectId,
+            ExamId = r.ExamId,
+            Email = r.Email,
+            Status = r.Status,
+            Payment = r.payment,
+            CreatedAt = r.CreatedAt,
+            ExamName = r.Exam.Name,
+            RoomName = r.Exam.Room.Name,
+            ExamFee = r.Exam.Fee
+        })
+        .FirstOrDefaultAsync();
 
             if (register == null)
-            {
                 return NotFound();
-            }
 
             return register;
         }
