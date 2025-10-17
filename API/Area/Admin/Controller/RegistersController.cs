@@ -26,7 +26,7 @@ namespace API.Area.Admin.Controller
         public async Task<ActionResult<IEnumerable<RegisterDto>>> GetRegisters([FromQuery] string? name, string? status)
         {
             var query = _context.Registers
-                        .Include(r => r.StudentId)
+                        .Include(r => r.Student)
                         .Include(r => r.Exam)
                             .ThenInclude(e => e.Room)
                         .Include(r => r.CourseSubject)
@@ -46,6 +46,7 @@ namespace API.Area.Admin.Controller
             }
             var result = await query.Select(r => new RegisterDto
             {
+                RegisterId = r.RegisterId,
                 StudentId = r.StudentId,
                 StudentName = r.Student.Name,
                 SubjectId = r.CourseSubject.SubjectId,
@@ -76,10 +77,10 @@ namespace API.Area.Admin.Controller
                                 .Where(r => r.RegisterId == id) 
         .Select(r => new RegisterDto
         {
+            RegisterId = r.RegisterId,
             StudentId = r.StudentId,
             StudentName = r.Student.Name,
             SubjectId = r.CourseSubject.SubjectId,
-            SubjectId = r.CourseSubject.SubjectName,
             ExamId = r.ExamId,
             Email = r.Email,
             Status = r.Status,
